@@ -1,5 +1,5 @@
 /*
-Lab 1
+Final Project
 Name: Steve Regala
 Student ID: 7293040280
 Email: sregala@usc.edu
