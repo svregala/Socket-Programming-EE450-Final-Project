@@ -35,7 +35,7 @@ using namespace std;
  */
 #define LOCALHOST "127.0.0.1"
 #define C_SERVER_PORT_UDP 23280  // main server will connect to this, server C port number
-#define MAXBUFLEN 1000     // max number of bytes at once
+#define MAXBUFLEN 1024     // max number of bytes at once
 
 
 /**

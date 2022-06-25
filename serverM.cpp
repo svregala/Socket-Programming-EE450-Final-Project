@@ -17,6 +17,7 @@ Email: sregala@usc.edu
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
+#include <time.h>
 
 #include <iostream>
 #include <string>
@@ -37,7 +38,7 @@ using namespace std;
 #define B_SERVER_PORT_UDP 22280
 #define C_SERVER_PORT_UDP 23280
 #define BACKLOG 10   // amount of pending connections queue will hold
-#define MAXBUFLEN 1000     // max number of bytes at once
+#define MAXBUFLEN 1024     // max number of bytes at once
 
 
 /**
@@ -188,6 +189,21 @@ vector<string> read_input_from_client(string s){
 
    while(iss >> word){
       result.push_back(word);
+   }
+   return result;
+}
+
+
+/**
+ * Return the maximum out of 3 integers, used to determine the highest serial number
+ */
+int return_max(int A, int B, int C){
+   int result = A;
+   if(result < B){
+      result = B;
+   }
+   if(result < C){
+      result = C;
    }
    return result;
 }
@@ -384,6 +400,24 @@ void client_operations(){
             perror("ERROR: Main server failed to send data back to client server.");
             exit(1);
          }
+
+         string message_to_ABC = "ERROR";
+         strcpy(send_to_servers_ABC, message_to_ABC.c_str());
+         // Send to A
+         if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverA_addr, sizeof(serverA_addr)) == -1){
+            perror("ERROR: Main server failed to send data to server A");
+            exit(1);
+         }
+         // Send to B
+         if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverB_addr, sizeof(serverB_addr)) == -1){
+            perror("ERROR: Main server failed to send data to server B");
+            exit(1);
+         }
+         // Send to C
+         if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverC_addr, sizeof(serverC_addr)) == -1){
+            perror("ERROR: Main server failed to send data to server C");
+            exit(1);
+         }
       }
 
       // CASE 2: One of the clients (sender OR receiver) are NOT in the network
@@ -397,6 +431,24 @@ void client_operations(){
             perror("ERROR: Main server failed to send data back to client server.");
             exit(1);
          }
+
+         string message_to_ABC = "ERROR";
+         strcpy(send_to_servers_ABC, message_to_ABC.c_str());
+         // Send to A
+         if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverA_addr, sizeof(serverA_addr)) == -1){
+            perror("ERROR: Main server failed to send data to server A");
+            exit(1);
+         }
+         // Send to B
+         if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverB_addr, sizeof(serverB_addr)) == -1){
+            perror("ERROR: Main server failed to send data to server B");
+            exit(1);
+         }
+         // Send to C
+         if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverC_addr, sizeof(serverC_addr)) == -1){
+            perror("ERROR: Main server failed to send data to server C");
+            exit(1);
+         }
       }
       // Sub-case 2: Receiver is NOT in the network
       else if((who_in_A == "TRANSFERRER" || who_in_A == "NONE") && (who_in_B == "TRANSFERRER" || who_in_B == "NONE") && (who_in_C == "TRANSFERRER" || who_in_C == "NONE")){
@@ -406,6 +458,24 @@ void client_operations(){
          // send response back to client
          if(send(client_sockfd_child, send_back_to_client, sizeof(send_back_to_client), 0) == -1){
             perror("ERROR: Main server failed to send data back to client server.");
+            exit(1);
+         }
+
+         string message_to_ABC = "ERROR";
+         strcpy(send_to_servers_ABC, message_to_ABC.c_str());
+         // Send to A
+         if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverA_addr, sizeof(serverA_addr)) == -1){
+            perror("ERROR: Main server failed to send data to server A");
+            exit(1);
+         }
+         // Send to B
+         if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverB_addr, sizeof(serverB_addr)) == -1){
+            perror("ERROR: Main server failed to send data to server B");
+            exit(1);
+         }
+         // Send to C
+         if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverC_addr, sizeof(serverC_addr)) == -1){
+            perror("ERROR: Main server failed to send data to server C");
             exit(1);
          }
       }
@@ -425,11 +495,83 @@ void client_operations(){
                perror("ERROR: Main server failed to send data back to client server.");
                exit(1);
             }
+
+            string message_to_ABC = "ERROR";
+            strcpy(send_to_servers_ABC, message_to_ABC.c_str());
+            // Send to A
+            if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverA_addr, sizeof(serverA_addr)) == -1){
+               perror("ERROR: Main server failed to send data to server A");
+               exit(1);
+            }
+            // Send to B
+            if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverB_addr, sizeof(serverB_addr)) == -1){
+               perror("ERROR: Main server failed to send data to server B");
+               exit(1);
+            }
+            // Send to C
+            if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverC_addr, sizeof(serverC_addr)) == -1){
+               perror("ERROR: Main server failed to send data to server C");
+               exit(1);
+            }
          }
 
          // Sub-case 2: Successful transaction because Sender has enough coins to transfer
          else{
-            cout << endl;
+            
+            string server_code; // this will be the string that will be read by all 3 servers to see which one of them should add the transaction to their network
+            srand(time(0));   // set seed
+            int random_num = rand()%3 + 1;
+
+            if(random_num == 1){
+               server_code = "A_STORE";
+            }else if(random_num == 2){
+               server_code = "B_STORE";
+            }else{
+               server_code = "C_STORE";
+            }
+
+            int final_serial = return_max(A_highest_serial, B_highest_serial, C_highest_serial) + 1;
+
+            string proceed_with_transaction = client_sender + " " + client_receiver + " " + to_string(client_amount) + " " + to_string(final_serial) + server_code;
+            strcpy(send_to_servers_ABC, proceed_with_transaction.c_str());
+
+            // ** Main server will send string <sender> <receiver> <amount> <highest serial num+1> <code> to all servers, but the <code> is randomized and is particular to a server, server will read this **
+            // First, send to server A
+            if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverA_addr, sizeof(serverA_addr)) == -1){
+               perror("ERROR: Main server failed to send data to server A");
+               exit(1);
+            }
+            sin_size_server_A = sizeof(serverA_addr);
+            if(recvfrom(server_sockfd_UDP, A_receive_from_servers, sizeof(A_receive_from_servers), 0, (struct sockaddr *)&serverA_addr, &sin_size_server_A) == -1){
+               perror("ERROR: Main server failed to receive data from server A");
+               exit(1);
+            }
+
+            // Second, send to server B
+            if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverB_addr, sizeof(serverB_addr)) == -1){
+               perror("ERROR: Main server failed to send data to server B");
+               exit(1);
+            }
+            sin_size_server_B = sizeof(serverB_addr);
+            if(recvfrom(server_sockfd_UDP, B_receive_from_servers, sizeof(B_receive_from_servers), 0, (struct sockaddr *)&serverB_addr, &sin_size_server_B) == -1){
+               perror("ERROR: Main server failed to receive data from server B");
+               exit(1);
+            }
+
+            // Third, send to server C
+            if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverC_addr, sizeof(serverC_addr)) == -1){
+               perror("ERROR: Main server failed to send data to server C");
+               exit(1);
+            }
+            sin_size_server_C = sizeof(serverC_addr);
+            if(recvfrom(server_sockfd_UDP, C_receive_from_servers, sizeof(C_receive_from_servers), 0, (struct sockaddr *)&serverC_addr, &sin_size_server_C) == -1){
+               perror("ERROR: Main server failed to receive data from server C");
+               exit(1);
+            }
+
+            // will be receiving the SENDER balance form the backend servers, combine the SENDER balance
+            // send the balance to the client, client will output
+
          }
 
       }

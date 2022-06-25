@@ -35,7 +35,7 @@ using namespace std;
  */
 #define LOCALHOST "127.0.0.1"
 #define A_SERVER_PORT_UDP 21280  // main server will connect to this, server A port number
-#define MAXBUFLEN 1000     // max number of bytes at once
+#define MAXBUFLEN 1024     // max number of bytes at once
 
 
 /**
@@ -327,6 +327,36 @@ int main(int argc, char* argv[]){
          }
 
          cout << "The ServerA finished sending the response to the Main Server." << endl;
+
+         // Receive a response from the main server letting the servers know that it should be a SUCCESSFUL or UNSUCCESSFUL transaction
+         // if it's a SUCCESSFUL MESSAGE (i.e. not "ERROR"), contents of the message will consist of <sender> <receiver> <amount> <highest serial num+1> <server indicator>
+         if(recvfrom(serverA_sockfd_UDP, input_from_main_server, sizeof(input_from_main_server), 0, (struct sockaddr *)&main_server_addr, &sin_size_main_server) == -1){
+            perror("ERROR: Server A failed to receive data from the main server");
+            exit(1);
+         }
+
+         // backend server will check if the message sent back is "ERROR" --> if it's not, proceed with processing the message
+         if(string(input_from_main_server)!="ERROR"){
+
+            vector<string> transaction_operation = read_input_from_main(input_from_main_server);
+            string server_code = transaction_operation.at(4);
+
+            if(server_code == "A_STORE"){
+               //do transaction stuff
+               /*
+               - store appropriate string in the text file
+               - edit the 3 global maps, transfer_amount, receive_amount, and ordered_transactions
+
+               */
+            }
+            // return the new balance of the SENDER to the main (have all three backend servers compute balance) --> the main will send it to the client
+         }
+
+
+         // have a receiver code here, main server will send a string particular to a backend server
+         // all the backend servers will receive that string, process it --> if it's meant for that particular server, that server will proceed to store transaction
+         // it will be sending over <sender> <receiver> <amount> <highest serial num+1> <server indicator>, each server will act according to the server indicator
+         // servers will then send back the balance of the transferer back to the main server
       }
 
       else{    // Monitor case

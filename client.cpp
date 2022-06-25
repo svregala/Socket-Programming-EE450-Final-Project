@@ -31,7 +31,7 @@ using namespace std;
  */
 #define LOCALHOST "127.0.0.1"
 #define CLIENT_PORT_TCP 25280    // port that client connects to
-#define MAXBUFLEN 1000     // max number of bytes at once
+#define MAXBUFLEN 1024     // max number of bytes at once
 
 
 /**
@@ -89,7 +89,9 @@ vector<string> read_input_from_main_server(string s){
 }
 
 
-
+/**
+ * Main function
+ */
 int main(int argc, char* argv[]){
 
    client_socket_TCP();
