@@ -63,14 +63,9 @@ void client_socket_TCP(){
    main_server_addr.sin_addr.s_addr = inet_addr(LOCALHOST);
    memset(&(main_server_addr.sin_zero), '\0', 8);  // set everything else to 0
 
-   /*if(connect(client_sockfd_TCP, (struct sockaddr *)&main_server_addr, sizeof(struct sockaddr)) == -1){
-      perror("ERROR: Client failed to connect to main server");
-      exit(1);
-   }*/
    connect(client_sockfd_TCP, (struct sockaddr *)&main_server_addr, sizeof(struct sockaddr));
 
    cout << "The client is up and running." << endl;
-
 }
 
 
@@ -130,7 +125,6 @@ int main(int argc, char* argv[]){
 
    }
 
-
    // if operation is to transfer money, i.e. argc==4
    else if(argc==4){
 
@@ -188,8 +182,10 @@ int main(int argc, char* argv[]){
       }
 
       // CASE 4: Successful transaction
-      else{
-         cout << endl;
+      else{    // size==4 (consist of new balance, sender, receiver, "SUCCESS")
+         string balance_outcome = response_from_main.at(0);
+         cout << transfer_name << " successfully transferred " << amount_transfer << " txcoins to " << receive_name << endl;
+         cout << "The current balance of " << transfer_name << " is " << balance_outcome << " txcoins." << endl;
       }
 
    }

@@ -22,8 +22,10 @@ Email: sregala@usc.edu
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <vector>
 #include <climits>
+#include <cstdio>
 
 using namespace std;
 
@@ -51,11 +53,13 @@ struct sockaddr_in client_addr, monitor_addr, serverA_addr, serverB_addr, server
 socklen_t sin_size_client, sin_size_monitor, sin_size_server_A, sin_size_server_B, sin_size_server_C;
 
 char input_from_client[MAXBUFLEN];
+char input_from_monitor[MAXBUFLEN];
 char send_to_servers_ABC[MAXBUFLEN];
 char A_receive_from_servers[MAXBUFLEN];
 char B_receive_from_servers[MAXBUFLEN];
 char C_receive_from_servers[MAXBUFLEN];
 char send_back_to_client[MAXBUFLEN];
+char send_back_to_monitor[MAXBUFLEN];
 
 
 
@@ -210,6 +214,50 @@ int return_max(int A, int B, int C){
 
 
 /**
+ * Swap helper function for sorting
+ */
+void swap(string& a, string& b){
+   string temp = a;
+   a = b;
+   b = temp;
+}
+
+/**
+ * Partition function used in Quicksort, choosing pivot as the last element
+ */
+int sort_partition(vector<string> &part_list, int s, int e){
+   string whole_string = part_list.at(e);
+   string first = whole_string.substr(0, whole_string.find(" "));
+   int p = stoi(first);   // pivot as the last element
+   int index = s-1;
+
+   for(int i=s; i<=e-1; i++){
+      string all_string = part_list.at(i);
+      string one = all_string.substr(0, all_string.find(" "));
+      int comp = stoi(one);
+      if(comp <= p){
+         index++;
+         swap(part_list.at(i), part_list.at(index));
+      }
+   }
+   swap(part_list.at(e), part_list.at(index+1));
+
+   return index+1;
+}
+
+/**
+ * Sort the list of transactions using Quicksort
+ */
+void quick_sort(vector<string> &transact_list, int start, int end){
+   if(start<end){
+      int pivot = sort_partition(transact_list, start, end);
+      quick_sort(transact_list, start, pivot-1);
+      quick_sort(transact_list, pivot+1, end);
+   }   
+}
+
+
+/**
  * Perform client operations
  */
 void client_operations(){
@@ -220,7 +268,7 @@ void client_operations(){
       exit(1);
    }
 
-   // received information from client through child socket
+   // receive information from client through child socket
    if(recv(client_sockfd_child, input_from_client, MAXBUFLEN, 0) == -1){
       perror("ERROR: Main server failed to receive information from client");
       exit(1);
@@ -532,7 +580,7 @@ void client_operations(){
 
             int final_serial = return_max(A_highest_serial, B_highest_serial, C_highest_serial) + 1;
 
-            string proceed_with_transaction = client_sender + " " + client_receiver + " " + to_string(client_amount) + " " + to_string(final_serial) + server_code;
+            string proceed_with_transaction = client_sender + " " + client_receiver + " " + to_string(client_amount) + " " + to_string(final_serial) + " " + server_code;
             strcpy(send_to_servers_ABC, proceed_with_transaction.c_str());
 
             // ** Main server will send string <sender> <receiver> <amount> <highest serial num+1> <code> to all servers, but the <code> is randomized and is particular to a server, server will read this **
@@ -569,45 +617,37 @@ void client_operations(){
                exit(1);
             }
 
-            // will be receiving the SENDER balance form the backend servers, combine the SENDER balance
+            // will be receiving the SENDER balance form the backend servers, COMBINE the SENDER balance
             // send the balance to the client, client will output
+            int A_balance = atoi(A_receive_from_servers);
+            int B_balance = atoi(B_receive_from_servers);
+            int C_balance = atoi(C_receive_from_servers);
+            int final_balance = 1000;
+
+            if(A_balance != INT_MIN){
+               final_balance += A_balance;
+            }
+            if(B_balance != INT_MIN){
+               final_balance += B_balance;
+            }
+            if(C_balance != INT_MIN){
+               final_balance += C_balance;
+            }
+            string result_final = to_string(final_balance) + " " + client_sender + " " + client_receiver + " SUCCESS";
+            strcpy(send_back_to_client, result_final.c_str());
+
+            // send response back to client
+            if(send(client_sockfd_child, send_back_to_client, sizeof(send_back_to_client), 0) == -1){
+               perror("ERROR: Main server failed to send data back to client server.");
+               exit(1);
+            }
 
          }
 
       }
 
-      
-
       cout << "The main server sent the result of the transaction to the client." << endl;
-
-
-      /*
-      ./client Steve Fernando 100
-
-      [CASE 1]: It is a successful transfer
-         - Main server receives the request from client --> 
-            - First, send information to all three backend servers to check if both users are part of the network
-               - if they both are, have the backend servers return the balance of the transferer AND all their highest SERIAL numbers
-                  - [CASE 2]: if one or both of the users are NOT a part of the network, backend servers will tell the main server, then main server will tell client
-               - using the balance, check to see if the transferer has enough coins to transfer (>= transfer amount)
-                  - [CASE 3]: if the transferer does NOT have enough coins to transfer
-               - if user has enough to transfer, main server will send the transaction to a random backend server ALONG with the maximum 
-                  - the random backend server will store it in their designated block.txt file
-               - the random backend server will let the main server know it was successful
-               - the main server will send the balance minus transfer amount to the client
-               - the client will output the success message and the new balance of the transferer
-                  - (possibly use the balance as an indicator that it was successful)
-      
-      [CASE 2]: if one or both of the users are NOT a part of the network, the backend servers will tell the main server
-         - then the main server will relay the message to the client
-         - the client will output message: unable to transfer because one or both users are not part of the network
-
-      [CASE 3]: if the transfere does NOT have enough coins to transfer
-         - then the main server will relay the message to the client
-         - the client will output message: unable to transfer because transferer has insufficient balance
-      */
    }
-
 }
 
 
@@ -618,14 +658,145 @@ void client_operations(){
 void monitor_operations(){
 
    sin_size_monitor = sizeof(struct sockaddr_in);
-      if((monitor_sockfd_child = accept(monitor_sockfd_TCP, (struct sockaddr *)&monitor_addr, &sin_size_monitor)) == -1){
-         perror("ERROR: Main server failed to accept connection with monitor");
+   if((monitor_sockfd_child = accept(monitor_sockfd_TCP, (struct sockaddr *)&monitor_addr, &sin_size_monitor)) == -1){
+      perror("ERROR: Main server failed to accept connection with monitor");
+      exit(1);
+   }
+
+   // receive information from monitor through child socket
+   if(recv(monitor_sockfd_child, input_from_monitor, MAXBUFLEN, 0) == -1){
+      perror("ERROR: Main server failed to receive information from monitor");
+      exit(1);
+   }
+
+   cout << "The main server received a sorted list request from the monitor using TCP over port " << MONITOR_PORT_TCP << "." << endl;
+
+   // initialize connection with UDP servers A,B,C
+   connect_servers();
+
+   // copy input_from_monitor into send_to_servers_ABC, then send it out to the servers
+   strcpy(send_to_servers_ABC, input_from_monitor);
+
+   // SERVER A --> SEND  -------------------------------------------------------
+   if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverA_addr, sizeof(serverA_addr)) == -1){
+      perror("ERROR: Main server failed to send data to server A");
+      exit(1);
+   }
+   cout << "The main server sent a request to server A." << endl;   
+
+   // SERVER B --> SEND  -------------------------------------------------------
+   if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverB_addr, sizeof(serverB_addr)) == -1){
+      perror("ERROR: Main server failed to send data to server B");
+      exit(1);
+   }
+   cout << "The main server sent a request to server B." << endl;
+
+   // SERVER C --> SEND  -------------------------------------------------------
+   if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverC_addr, sizeof(serverC_addr)) == -1){
+      perror("ERROR: Main server failed to send data to server C");
+      exit(1);
+   }
+   cout << "The main server sent a request to server C." << endl;
+
+
+   // FIRST, receive the size of each ordered map created in each backend server -------------------------------------------------------
+   // SERVER A --> RECEIVE  -------------------------------------------------------
+   sin_size_server_A = sizeof(serverA_addr);
+   if(recvfrom(server_sockfd_UDP, A_receive_from_servers, sizeof(A_receive_from_servers), 0, (struct sockaddr *)&serverA_addr, &sin_size_server_A) == -1){
+      perror("ERROR: Main server failed to receive data from server A");
+      exit(1);
+   }
+
+   // SERVER B --> RECEIVE  -------------------------------------------------------
+   sin_size_server_B = sizeof(serverB_addr);
+   if(recvfrom(server_sockfd_UDP, B_receive_from_servers, sizeof(B_receive_from_servers), 0, (struct sockaddr *)&serverB_addr, &sin_size_server_B) == -1){
+      perror("ERROR: Main server failed to receive data from server B");
+      exit(1);
+   }
+
+   // SERVER C --> RECEIVE  -------------------------------------------------------
+   sin_size_server_C = sizeof(serverC_addr);
+   if(recvfrom(server_sockfd_UDP, C_receive_from_servers, sizeof(C_receive_from_servers), 0, (struct sockaddr *)&serverC_addr, &sin_size_server_C) == -1){
+      perror("ERROR: Main server failed to receive data from server C");
+      exit(1);
+   }
+
+   int map_size_A = atoi(A_receive_from_servers);
+   int map_size_B = atoi(B_receive_from_servers);
+   int map_size_C = atoi(C_receive_from_servers);
+
+   // SECOND, send confirmation to servers A, B, C to begin sending data over
+   strcpy(send_to_servers_ABC, "Confirmed");
+   if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverA_addr, sizeof(serverA_addr)) == -1){
+      perror("ERROR: Main server failed to send data to server A");
+      exit(1);
+   }
+   if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverB_addr, sizeof(serverB_addr)) == -1){
+      perror("ERROR: Main server failed to send data to server B");
+      exit(1);
+   }
+   if(sendto(server_sockfd_UDP, send_to_servers_ABC, sizeof(send_to_servers_ABC), 0, (struct sockaddr *)&serverC_addr, sizeof(serverC_addr)) == -1){
+      perror("ERROR: Main server failed to send data to server C");
+      exit(1);
+   }
+
+   // CLEAR the vector before appending to it
+   vector<string> list_of_transactions;
+
+   for(int i=0; i<map_size_A; i++){
+      if(recvfrom(server_sockfd_UDP, A_receive_from_servers, sizeof(A_receive_from_servers), 0, (struct sockaddr *)&serverA_addr, &sin_size_server_A) == -1){
+         perror("ERROR: Main server failed to receive data from server A");
          exit(1);
       }
+      list_of_transactions.push_back(A_receive_from_servers);
+   }
+   
+   for(int j=0; j<map_size_B; j++){
+      if(recvfrom(server_sockfd_UDP, B_receive_from_servers, sizeof(B_receive_from_servers), 0, (struct sockaddr *)&serverB_addr, &sin_size_server_B) == -1){
+         perror("ERROR: Main server failed to receive data from server B");
+         exit(1);
+      }
+      list_of_transactions.push_back(B_receive_from_servers);
+   }
 
+   for(int k=0; k<map_size_C; k++){
+      if(recvfrom(server_sockfd_UDP, C_receive_from_servers, sizeof(C_receive_from_servers), 0, (struct sockaddr *)&serverC_addr, &sin_size_server_C) == -1){
+         perror("ERROR: Main server failed to receive data from server C");
+         exit(1);
+      }
+      list_of_transactions.push_back(C_receive_from_servers);
+   }
+
+   cout << "The main server received TXLIST data from Server A using UDP over port " << SERVER_PORT_UDP << endl;
+   cout << "The main server received TXLIST data from Server B using UDP over port " << SERVER_PORT_UDP << endl;
+   cout << "The main server received TXLIST data from Server C using UDP over port " << SERVER_PORT_UDP << endl;
+
+   // THIRD, sort the list of transactions
+   quick_sort(list_of_transactions, 0, list_of_transactions.size()-1);
+   
+   // FOURTH, store transaction data in txchain.txt
+   //ofstream my_file("txchain.txt", ios::trunc);
+   ofstream my_file("txchain.txt");
+   for(int n=0; n<list_of_transactions.size(); n++){
+      cout << list_of_transactions.at(n);
+      my_file << list_of_transactions.at(n);
+   }
+   my_file.close();
+
+   // LASTLY, receive confirmation from monitor to begin sending list data over
+   strcpy(send_back_to_monitor, "Confirmed");
+   if(send(monitor_sockfd_child, send_back_to_monitor, sizeof(send_back_to_monitor), 0) == -1){
+      perror("ERROR: Main server failed to send data back to client server.");
+      exit(1);
+   }
+
+   cout << "The main server confirms the list of sorted transactions have been generated." << endl;
 }
 
 
+/**
+ * Main Function 
+ */
 int main(int argc, char* argv[]){
 
    client_socket_TCP();
@@ -636,7 +807,6 @@ int main(int argc, char* argv[]){
    cout << "The main server is up and running." << endl;
 
    while(1){
-
       // FIRST accept, receive, compute, send sequence for CLIENT -------------------------------------------------------
       client_operations();
 
@@ -645,9 +815,7 @@ int main(int argc, char* argv[]){
 
       // THIRD accept, receive, compute, send sequence for MONITOR -------------------------------------------------------
       monitor_operations();
-      
    }
-
 
    // must close socket parents
    close(client_sockfd_TCP);

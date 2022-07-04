@@ -155,6 +155,82 @@ string decoder(string s){
 
 
 /**
+ * Helper function to encode name for when we store it inside the block file
+ */
+string encoder(string s){
+
+   string result = "";
+   int temp_num = 0;
+   int add_num = 0;
+
+   for(int i=0; i<(int)s.length(); i++){
+      // letter case: 2 sub-cases --> upper and lower
+      if( ((int)s[i]>64 && (int)s[i]<91) || ((int)s[i]>96 && (int)s[i]<123) ){
+         // upper case
+         if(isupper(s[i])){
+
+            temp_num = s[i];
+            if(temp_num == 88 || temp_num == 89 || temp_num == 90){
+               if(temp_num==88){    // if character is X, encode to A
+                  result+=char(65);
+               }else if(temp_num==89){    // if character is Y, encode to B
+                  result+=char(66);
+               }else{
+                  result+=char(67);    // if character is Z, encode to C
+               }
+            }else{
+               temp_num = s[i]+3;
+               result+=char(temp_num);
+            }
+         // lower case
+         }else{
+
+            temp_num = s[i];
+            if(temp_num == 120 || temp_num == 121 || temp_num == 122){
+               if(temp_num==120){   // if character is x, encode it to a
+                  result+=char(97);
+               }else if(temp_num==121){   // if character is y, encode it to b
+                  result+=char(98);
+               }else{      // if character is z, encode it to c
+                  result+=char(99);
+               }
+            }else{
+               temp_num = s[i]+3;
+               result+=char(temp_num);
+            }
+
+         }
+      }
+
+      // number case
+      else if((int)s[i]>47 && (int)s[i]<58){
+         temp_num = s[i];
+         if(temp_num == 55 || temp_num == 56 || temp_num == 57){
+            if(temp_num == 55){  // if character is '7', encode to 0
+               result+=char(48);
+            }else if(temp_num == 56){  // if character is '8', encode to 1
+               result+=char(49);
+            }else{      // if character is '9', encode to 2
+               result+=char(50);
+            }
+         }else{
+            add_num = stoi(to_string(s[i]));
+            add_num += 3;
+            result += char(add_num);
+         }
+      }
+
+      // deal with anything else, e.g. '!', '.', '?', etc.
+      else{
+         result += s[i];
+      }
+   }
+
+   return result;
+}
+
+
+/**
  * Read in block2.txt and create reference for when balance is needed
  */
 void create_transfer_receive_map(string file_name){
@@ -327,28 +403,121 @@ int main(int argc, char* argv[]){
          }
 
          cout << "The ServerB finished sending the response to the Main Server." << endl;
+
+         // Receive a response from the main server letting the servers know that it should be a SUCCESSFUL or UNSUCCESSFUL transaction
+         // if it's a SUCCESSFUL MESSAGE (i.e. not "ERROR"), contents of the message will consist of <sender> <receiver> <amount> <highest serial num+1> <server indicator>
+         if(recvfrom(serverB_sockfd_UDP, input_from_main_server, sizeof(input_from_main_server), 0, (struct sockaddr *)&main_server_addr, &sin_size_main_server) == -1){
+            perror("ERROR: Server B failed to receive data from the main server");
+            exit(1);
+         }
+
+         // backend server will check if the message sent back is "ERROR" --> if it's not, proceed with processing the message
+         if(string(input_from_main_server)!="ERROR"){
+
+            vector<string> transaction_operation = read_input_from_main(input_from_main_server);
+            string server_code = transaction_operation.at(4);
+            string sender = transaction_operation.at(0);
+            string recipient = transaction_operation.at(1);
+            string store_amount = transaction_operation.at(2);
+
+            // if randomizer chose server B to store the transaction file
+            if(server_code == "B_STORE"){
+               // <serial num> <sender> <receiver> <amount>
+               string store_in_file = transaction_operation.at(3) + " " + encoder(sender) + " " + encoder(recipient) + " " + encoder(store_amount) + "\n";
+
+               // Store into text file block2.txt (MUST BE ENCODED APPROPRIATELY)
+               ofstream file_out;
+               ifstream file_in;
+               file_in.open("block2.txt");
+               file_out.open("block2.txt", ios::app);  // append to file
+               if(file_in.is_open()){
+                  file_out << store_in_file;
+                  file_in.close();
+                  file_out.close();
+               }else{
+                  cout << "ERROR: Could not open text file to append to." << endl;
+                  exit(1);
+               }
+
+               // EDIT GLOBAL MAPS: transfer_amount, receive_amount, and ordered_transactions
+               int recent_amount = stoi(store_amount);
+
+               // first: edit transfer_amount
+               if(transfer_amount.count(sender)<=0){  // check if sender is NOT already in the map
+                  transfer_amount.insert(make_pair(sender, (-1)*recent_amount));    // value is negative amount (bc it's how much the sender is losing)
+               }else{   // if sender IS in map already
+                  int temp_amount_send = transfer_amount.at(sender);
+                  temp_amount_send -= recent_amount;
+                  transfer_amount[sender] = temp_amount_send;
+               }
+               // second: edit receive_amount
+               if(receive_amount.count(recipient)<=0){   // check if recepient is NOT already in the map
+                  receive_amount.insert(make_pair(recipient, recent_amount));
+               }else{   // if recipient IS in map already
+                  int temp_amount_rec = receive_amount.at(recipient);
+                  temp_amount_rec += recent_amount;
+                  receive_amount[recipient] = temp_amount_rec;
+               }
+               // third: edit ordered_transactions
+               vector<string> insert_vector;
+               int new_serial = stoi(transaction_operation.at(3));
+               insert_vector.push_back(sender);
+               insert_vector.push_back(recipient);
+               insert_vector.push_back(transaction_operation.at(2));
+               ordered_transactions.insert(make_pair(new_serial, insert_vector));
+
+            }
+
+            // return the new balance of the SENDER to the main (have all three backend servers compute balance) --> the main will send it to the client
+            int balance_from_B = calculate_balance(sender);
+            string temp_balance = to_string(balance_from_B);
+            strcpy(send_back_main_server, temp_balance.c_str());
+
+            if(sendto(serverB_sockfd_UDP, send_back_main_server, sizeof(send_back_main_server), 0, (struct sockaddr *)&main_server_addr, sizeof(main_server_addr)) == -1){
+               perror("ERROR: Server B failed to send data to the main server");
+               exit(1);
+            }
+
+         }
+
       }
 
-      else{    // Monitor case
+      else{    // Monitor case - Input from main server was "TXLIST"
 
+         // FIRST, send size of ordered_transactions
+         string send_map_size = to_string(ordered_transactions.size());
+         strcpy(send_back_main_server, send_map_size.c_str());
+
+         if(sendto(serverB_sockfd_UDP, send_back_main_server, sizeof(send_back_main_server), 0, (struct sockaddr *)&main_server_addr, sizeof(main_server_addr)) == -1){
+            perror("ERROR: Server B failed to send data to the main server");
+            exit(1);
+         }
+
+         // receive the confirmation to start the for loop
+         sin_size_main_server = sizeof(main_server_addr);
+         if(recvfrom(serverB_sockfd_UDP, input_from_main_server, sizeof(input_from_main_server), 0, (struct sockaddr *)&main_server_addr, &sin_size_main_server) == -1){
+            perror("ERROR: Server B failed to receive data from the main server");
+            exit(1);
+         }
+
+         // iterate through the ordered map and send each transaction
+         map<int, vector<string> >::iterator iter;
+         for(iter=ordered_transactions.begin(); iter!=ordered_transactions.end(); iter++){
+            
+            string serial = to_string(iter->first);
+            string sender = iter->second.at(0);
+            string receiver = iter->second.at(1);
+            string amount = iter->second.at(2);
+            string send_transact = serial + " " + sender + " " + receiver + " " + amount + "\n";
+            strcpy(send_back_main_server, send_transact.c_str());
+
+            if(sendto(serverB_sockfd_UDP, send_back_main_server, sizeof(send_back_main_server), 0, (struct sockaddr *)&main_server_addr, sizeof(main_server_addr)) == -1){
+               perror("ERROR: Server B failed to send data to the main server");
+               exit(1);
+            }
+
+         }
       }
-
-
-
-
-      /*
-      For transactions
-         - have a global variable that we update each time we process a transaction, to correctly establish the serial number
-      */
-
-
-      /*
-      - ordered map -> int, the rest of the string (vector of strings)
-         - takes care of monitor request (TXLIST)
-      - undordered map receive -> string name, int value (everything received)
-      - unordered map sent -> string name, int value (everything sent)
-         - takes care of check balance, transferring money
-      */
    }
 
    close(serverB_sockfd_UDP);
