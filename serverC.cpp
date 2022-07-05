@@ -23,7 +23,6 @@ Email: sregala@usc.edu
 #include <sstream>
 #include <fstream>
 #include <vector>
-#include <charconv>
 #include <map>
 #include <unordered_map>
 #include <climits>
@@ -517,6 +516,8 @@ int main(int argc, char* argv[]){
             }
 
          }
+
+         cout << "The ServerC finished sending the response to the Main Server." << endl;
       }
    }
 

@@ -3,12 +3,12 @@ Name: Steve Regala
 Student ID: 7293040280
 Email: sregala@usc.edu
 
-** Instructions **:
+** Instructions **: ------------------------------------------------------------------------------------------------------------------------------
 - Use "make" to compile. If necessary, use "make clean" to remove any possible object files.
 
-** Program Information **:
+** Program Information **: ------------------------------------------------------------------------------------------------------------------------------
 
-Algorithm for handling transaction case
+The following algorithm is for handling the transaction case:
 /*
       ./client Steve Fernando 100
 
@@ -33,7 +33,6 @@ Algorithm for handling transaction case
       [CASE 3]: if the transfere does NOT have enough coins to transfer
          - then the main server will relay the message to the client
          - the client will output message: unable to transfer because transferer has insufficient balance
-      */
 
 
       For a SUCCESSFUL transaction case:
@@ -41,12 +40,14 @@ Algorithm for handling transaction case
          // all the backend servers will receive that string, process it --> if it's meant for that particular server, that server will proceed to store transaction
          // it will be sending over <sender> <receiver> <amount> <highest serial num+1> <server indicator>, each server will act according to the server indicator
          // servers will then send back the balance of the transferer back to the main server
+*/
 
 
-Algorithm for TXLIST case
+The following algorithm is for handling the TXLIST case:
+/*
    - When the main server sends the request to the servers, the main server will print out that it has sent a request to the servers
    - Similarly, when the main server receives information for TXLIST from the servers, it will print out that it has received TXLIST information from them
-   // continuously receive data from 
+   // continuously receive data from all the backend servers
    /*
       - store incoming transaction lines into a list that is later going to get sorted
       - have a global variable corresponding to all the servers A,B,C --> say num_transactions_A, num_transactions_B, num_transactions_C
@@ -69,7 +70,29 @@ Algorithm for TXLIST case
       */
 
 
-** Citations/Descriptions **:
-Beej's socket programming in all the files, in functions ________, _____, _____
+The following content is the messages printed out on the main server side when handling TXLIST case:
+   Main server message output for when monitor sends a sorted list request:
+   The main server received a sorted list request from the monitor using TCP over port 26280.
+   The main server sent a request to server A.
+   The main server sent a request to server B.
+   The main server sent a request to server C.
+   The main server received TXLIST data from Server A using UDP over port 24280
+   The main server received TXLIST data from Server B using UDP over port 24280
+   The main server received TXLIST data from Server C using UDP over port 24280
+   The main server confirms the list of sorted transactions has been generated.
 
-Sorting algorithm used the pseudo-code and example in https://www.softwaretestinghelp.com/quick-sort/
+
+** Citations/Descriptions **: ------------------------------------------------------------------------------------------------------------------------------
+
+- I used Beej's socket programming in all the files (client.cpp, monitor.cpp, serverA.cpp, serverB.cpp, serverC.cpp).
+- The following functions in the following files used code that was from Beej's socket programming:
+   client.cpp: client_socket_TCP and the main function, i.e. the code with sending and receiving from a socket.
+   monitor.cpp: monitor_socket_TCP and the main function, i.e. the code with sending and receiving from a socket.
+   serverM.cpp: client_socket_TCP, monitor_socket_TCP, server_socket_UDP, client_monitor_listen, connect_servers, client_operations, monitor_operations, and the main function, i.e. the code with sending and receiving from a socket.
+   serverA: serverA_socket_UDP and the main function, i.e. the code with sending and receiving from a socket.
+   serverB: serverB_socket_UDP and the main function, i.e. the code with sending and receiving from a socket.
+   serverC: serverC_socket_UDP and the main function, i.e. the code with sending and receiving from a socket.
+
+
+- I used the QuickSort sorting algorithm and the pseudo-code in the example presented in https://www.softwaretestinghelp.com/quick-sort/.
+   - The code can be seen in serverM.cpp in the functions: quick_sort, sort_partition, and swap.

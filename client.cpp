@@ -184,7 +184,7 @@ int main(int argc, char* argv[]){
       // CASE 4: Successful transaction
       else{    // size==4 (consist of new balance, sender, receiver, "SUCCESS")
          string balance_outcome = response_from_main.at(0);
-         cout << transfer_name << " successfully transferred " << amount_transfer << " txcoins to " << receive_name << endl;
+         cout << transfer_name << " successfully transferred " << amount_transfer << " txcoins to " << receive_name << "." << endl;
          cout << "The current balance of " << transfer_name << " is " << balance_outcome << " txcoins." << endl;
       }
 

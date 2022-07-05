@@ -226,15 +226,15 @@ void swap(string& a, string& b){
  * Partition function used in Quicksort, choosing pivot as the last element
  */
 int sort_partition(vector<string> &part_list, int s, int e){
-   string whole_string = part_list.at(e);
+   string whole_string = part_list.at(e);    // lines 229 and 230 are there to grab the serial number associated with the string
    string first = whole_string.substr(0, whole_string.find(" "));
    int p = stoi(first);   // pivot as the last element
    int index = s-1;
 
    for(int i=s; i<=e-1; i++){
-      string all_string = part_list.at(i);
-      string one = all_string.substr(0, all_string.find(" "));
-      int comp = stoi(one);
+      string all_string = part_list.at(i);   // lines 235 and 236 are for the same reason as 229 and 230
+      string num = all_string.substr(0, all_string.find(" "));
+      int comp = stoi(num);
       if(comp <= p){
          index++;
          swap(part_list.at(i), part_list.at(index));
@@ -777,8 +777,7 @@ void monitor_operations(){
    // FOURTH, store transaction data in txchain.txt
    //ofstream my_file("txchain.txt", ios::trunc);
    ofstream my_file("txchain.txt");
-   for(int n=0; n<list_of_transactions.size(); n++){
-      cout << list_of_transactions.at(n);
+   for(int n=0; n<(int)list_of_transactions.size(); n++){
       my_file << list_of_transactions.at(n);
    }
    my_file.close();
@@ -790,7 +789,7 @@ void monitor_operations(){
       exit(1);
    }
 
-   cout << "The main server confirms the list of sorted transactions have been generated." << endl;
+   cout << "The main server confirms the list of sorted transactions has been generated." << endl;
 }
 
 
