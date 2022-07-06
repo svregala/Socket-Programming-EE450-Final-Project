@@ -48,8 +48,8 @@ unordered_map<string, int> transfer_amount;  // will hold the total transferred 
 unordered_map<string, int> receive_amount;   // will hold the total received amount of each person in the network
 map<int, vector<string> > ordered_transactions; // will hold the ordered transactions from each text file, key=serial number, value = vector of strings (transferer, receiver, amount)
 
-char input_from_main_server[MAXBUFLEN];
-char send_back_main_server[MAXBUFLEN];
+char input_from_main_server[MAXBUFLEN];   // message from the main server
+char send_back_main_server[MAXBUFLEN];    // message to send back to the main server
 
 
 /**
@@ -323,6 +323,9 @@ vector<string> read_input_from_main(string s){
 }
 
 
+/**
+ * Main Function 
+ */
 int main(int argc, char* argv[]){
 
    serverC_socket_UDP();

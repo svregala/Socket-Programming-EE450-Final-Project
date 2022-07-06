@@ -38,8 +38,8 @@ int monitor_sockfd_TCP;
 struct sockaddr_in main_server_addr;
 
 string monitor_operation;
-char send_to_main[MAXBUFLEN];
-char receive_from_main[MAXBUFLEN];
+char send_to_main[MAXBUFLEN];    // message that will be sent back to the main server
+char receive_from_main[MAXBUFLEN];     // message that will be received from the main server
 
 
 /**

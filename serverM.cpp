@@ -52,14 +52,14 @@ struct sockaddr_in client_addr_main, monitor_addr_main, server_addr_UDP; // main
 struct sockaddr_in client_addr, monitor_addr, serverA_addr, serverB_addr, serverC_addr; // Connector's address info
 socklen_t sin_size_client, sin_size_monitor, sin_size_server_A, sin_size_server_B, sin_size_server_C;
 
-char input_from_client[MAXBUFLEN];
-char input_from_monitor[MAXBUFLEN];
-char send_to_servers_ABC[MAXBUFLEN];
-char A_receive_from_servers[MAXBUFLEN];
-char B_receive_from_servers[MAXBUFLEN];
-char C_receive_from_servers[MAXBUFLEN];
-char send_back_to_client[MAXBUFLEN];
-char send_back_to_monitor[MAXBUFLEN];
+char input_from_client[MAXBUFLEN];     // message from the client server
+char input_from_monitor[MAXBUFLEN];    // message from the monitor server
+char send_to_servers_ABC[MAXBUFLEN];   // message to send to the backend servers A,B,C
+char A_receive_from_servers[MAXBUFLEN];   // message from server A
+char B_receive_from_servers[MAXBUFLEN];   // message from server B
+char C_receive_from_servers[MAXBUFLEN];   // message from server C
+char send_back_to_client[MAXBUFLEN];   // message to send back to the client
+char send_back_to_monitor[MAXBUFLEN];  // message to send back to the monitor
 
 
 
@@ -214,7 +214,8 @@ int return_max(int A, int B, int C){
 
 
 /**
- * Swap helper function for sorting
+ * Swap helper function for sorting 
+ * this code is cited in my README
  */
 void swap(string& a, string& b){
    string temp = a;
@@ -224,6 +225,7 @@ void swap(string& a, string& b){
 
 /**
  * Partition function used in Quicksort, choosing pivot as the last element
+ * this code is cited in my README
  */
 int sort_partition(vector<string> &part_list, int s, int e){
    string whole_string = part_list.at(e);    // lines 229 and 230 are there to grab the serial number associated with the string
@@ -247,6 +249,7 @@ int sort_partition(vector<string> &part_list, int s, int e){
 
 /**
  * Sort the list of transactions using Quicksort
+ * this code is cited in my README
  */
 void quick_sort(vector<string> &transact_list, int start, int end){
    if(start<end){
@@ -649,7 +652,6 @@ void client_operations(){
       cout << "The main server sent the result of the transaction to the client." << endl;
    }
 }
-
 
 
 /**

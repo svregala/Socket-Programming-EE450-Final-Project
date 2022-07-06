@@ -44,8 +44,8 @@ string name_balance;    // for the checking balance operation
 string transfer_name, receive_name;    // names for transferring money operation
 int amount_transfer;    // amount to transfer
 
-char send_to_main[MAXBUFLEN];
-char receive_from_main[MAXBUFLEN];
+char send_to_main[MAXBUFLEN]; // message that will be sent back to the main server
+char receive_from_main[MAXBUFLEN];  // message that will be received from the main server
 
 
 /**
