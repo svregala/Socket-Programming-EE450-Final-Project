@@ -1,13 +1,3 @@
 {
-   "makefile.extensionOutputFolder": "./.vscode",
-   "files.associations": {
-      "iostream": "cpp",
-      "vector": "cpp",
-      "iosfwd": "cpp",
-      "fstream": "cpp",
-      "unordered_map": "cpp",
-      "string": "cpp",
-      "map": "cpp",
-      "ostream": "cpp"
-   }
+   "makefile.extensionOutputFolder": "./.vscode"
 }
