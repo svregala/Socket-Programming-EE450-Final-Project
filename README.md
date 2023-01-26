@@ -1,9 +1,3 @@
-Final Project
-Name: Steve Regala
-Student ID: 7293040280
-Email: sregala@usc.edu
-
-
 ** PROJECT DESCRIPTION **: 
 --------------------------------------------------
 - The whole project description can be read/found under EE450 Socket Programming Project.pdf.
