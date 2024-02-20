@@ -1,4 +1,4 @@
-** PROJECT DESCRIPTION **: 
+PROJECT DESCRIPTION: 
 --------------------------------------------------
 - The whole project description can be read/found under EE450 Socket Programming Project.pdf.
 - I created a simplified version of a blockchain service called Txchain, where a client issues a request for finding their current balance in their account, transfers coins to another client, and provides a file statement with all transactions in order.
@@ -23,13 +23,13 @@
       The main server confirms the list of sorted transactions has been generated.
 
 
-** INSTRUCTIONS **: 
+INSTRUCTIONS: 
 --------------------------------------------------
 - Use "make" or "make all" to compile. If necessary, use "make clean" to remove any possible object files.
 - The program will be compiled using C++ version C++11.
 
 
-** PROGRAM INFORMATION **: 
+PROGRAM INFORMATION: 
 --------------------------------------------------
 - More details could be found in the project description.
 
@@ -105,7 +105,7 @@ The following algorithm is for handling the TXLIST case:
 */
 
 
-** CITATIONS/DESCRIPTIONS **: 
+CITATIONS/DESCRIPTIONS: 
 --------------------------------------------------
 - I referred to Beej's socket programming in all the files (client.cpp, monitor.cpp, serverA.cpp, serverB.cpp, serverC.cpp).
 - The following functions in the following files used code that was from Beej's socket programming:
